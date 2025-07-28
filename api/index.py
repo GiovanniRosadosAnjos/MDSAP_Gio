@@ -357,15 +357,42 @@ def ask_question():
     })
 
 def process_question(question):
-    """Processa a pergunta e retorna uma resposta baseada no conhecimento"""
+    """Processa a pergunta e retorna uma resposta baseada no conhecimento com NLU aprimorado"""
+    
+    # Sistema de mapeamento contextual - NLU básico
+    contextual_mappings = {
+        'n4': 'IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2)',
+        'n5': 'documento N5 MDSAP',
+        'auditoria': 'processo de auditoria MDSAP ciclo',
+        'certificação': 'certificação ISO 13485 MDSAP',
+        'países': 'países membros participantes',
+        'organizações': 'organizações de auditoria reconhecidas',
+        'fda': 'Estados Unidos FDA',
+        'anvisa': 'Brasil ANVISA',
+        'tga': 'Austrália TGA',
+        'health canada': 'Canadá Health Canada',
+        'pmda': 'Japão PMDA MHLW',
+        'iso': 'ISO 13485 certificação',
+        'requisitos': 'requisitos regulatórios',
+        'vigilância': 'auditoria vigilância',
+        'recertificação': 'auditoria recertificação'
+    }
+    
+    # Pré-processamento da pergunta com expansão contextual
+    expanded_question = question.lower()
+    
+    # Expandir termos baseados no mapeamento contextual
+    for short_term, expanded_term in contextual_mappings.items():
+        if short_term in expanded_question:
+            expanded_question += f" {expanded_term}"
     
     # Buscar conhecimento relevante
     relevant_knowledge = []
     
-    # Buscar por palavras-chave na pergunta
-    words = question.split()
+    # Buscar por palavras-chave na pergunta expandida
+    words = expanded_question.split()
     for word in words:
-        if len(word) > 3:  # Ignorar palavras muito curtas
+        if len(word) > 2:  # Reduzido para capturar mais termos
             for knowledge in KNOWLEDGE_DATA:
                 if (word in knowledge['topic'].lower() or 
                     word in knowledge['content'].lower() or 
@@ -373,27 +400,56 @@ def process_question(question):
                     if knowledge not in relevant_knowledge:
                         relevant_knowledge.append(knowledge)
     
-    # Gerar resposta
+    # Gerar resposta com lógica aprimorada
     if not relevant_knowledge:
         answer = "Desculpe, não encontrei informações específicas sobre sua pergunta. Você pode tentar reformular a pergunta ou buscar por termos mais específicos relacionados ao MDSAP."
         sources = []
         related_topics = []
     else:
-        # Combinar conteúdo relevante
+        # Priorizar resultados baseados na relevância
+        scored_knowledge = []
+        original_words = question.lower().split()
+        
+        for knowledge in relevant_knowledge:
+            score = 0
+            # Pontuação baseada em correspondências diretas
+            for word in original_words:
+                if len(word) > 2:
+                    if word in knowledge['topic'].lower():
+                        score += 3  # Maior peso para título
+                    if word in knowledge['content'].lower():
+                        score += 1  # Peso menor para conteúdo
+                    if any(word in keyword.lower() for keyword in knowledge['keywords']):
+                        score += 2  # Peso médio para palavras-chave
+            
+            # Bonificação para correspondências contextuais
+            for short_term in contextual_mappings.keys():
+                if short_term in question.lower():
+                    if short_term in knowledge['content'].lower() or short_term in knowledge['topic'].lower():
+                        score += 5  # Alta prioridade para correspondências contextuais
+            
+            scored_knowledge.append((knowledge, score))
+        
+        # Ordenar por pontuação (maior primeiro)
+        scored_knowledge.sort(key=lambda x: x[1], reverse=True)
+        
+        # Combinar conteúdo relevante (top 3)
         content_parts = []
         sources = []
         related_topics = []
         
-        for knowledge in relevant_knowledge[:3]:  # Limitar a 3 resultados mais relevantes
+        for knowledge, score in scored_knowledge[:3]:
             content_parts.append(f"**{knowledge['topic']}**: {knowledge['content']}")
             sources.append(knowledge['category'])
             related_topics.append(knowledge['topic'])
         
-        answer = "\n".join(content_parts)
+        answer = "\n\n".join(content_parts)
         
-        # Adicionar uma resposta padrão se a busca for muito ampla
-        if len(relevant_knowledge) > 3:
-            answer += "\n\nEncontrei mais informações relevantes. Por favor, seja mais específico em sua pergunta para obter uma resposta mais detalhada."
+        # Adicionar sugestões se houver mais resultados
+        if len(scored_knowledge) > 3:
+            answer += f"\n\n💡 **Dica**: Encontrei {len(scored_knowledge)} informações relacionadas. Para respostas mais específicas, tente perguntas como:"
+            for knowledge, _ in scored_knowledge[3:6]:  # Mostrar próximos 3
+                answer += f"\n• \"{knowledge['topic']}?\""
 
     return {
         'answer': answer,
