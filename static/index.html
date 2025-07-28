@@ -69,11 +69,11 @@
 
                 <h2 class="text-lg font-semibold mb-4 flex items-center"><img src="https://api.iconify.design/mdi:comment-question-outline.svg?color=%23ffffff" class="w-6 h-6 mr-2" alt="">Perguntas Sugeridas</h2>
                 <div class="space-y-2">
-                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'O que é o MDSAP?\')">O que é o MDSAP?</button>
-                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'Quais são os benefícios do MDSAP?\')">Benefícios do MDSAP</button>
-                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'Como funciona o processo de auditoria?\')">Processo de Auditoria</button>
-                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'Qual a relação do MDSAP com a ISO 13485?\')">Relação com ISO 13485</button>
-                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'O que é o documento (IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2))?\')">O que é o documento (IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2))?</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion('O que é o MDSAP?')">O que é o MDSAP?</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion('Quais são os benefícios do MDSAP?')">Benefícios do MDSAP</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion('Como funciona o processo de auditoria?')">Processo de Auditoria</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion('Qual a relação do MDSAP com a ISO 13485?')">Relação com ISO 13485</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion('O que é o documento (IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2))?')">O que é o documento (IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2))?</button>
                 </div>
             </aside>
 
@@ -94,21 +94,21 @@
     </div>
 
     <script>
-        const chatArea = document.getElementById(\'chat-area\');
-        const userInput = document.getElementById(\'user-input\');
+        const chatArea = document.getElementById('chat-area');
+        const userInput = document.getElementById('user-input');
 
         async function sendMessage(message, isUser = true) {
-            const bubble = document.createElement(\'div\');
+            const bubble = document.createElement('div');
             bubble.classList.add(
-                \'p-3\',
-                \'mb-4\',
-                \'max-w-3/4\',
-                \'shadow-md\'
+                'p-3',
+                'mb-4',
+                'max-w-3/4',
+                'shadow-md'
             );
             if (isUser) {
-                bubble.classList.add(\'chat-bubble-user\', \'self-end\');
+                bubble.classList.add('chat-bubble-user', 'self-end');
             } else {
-                bubble.classList.add(\'chat-bubble-agent\', \'self-start\');
+                bubble.classList.add('chat-bubble-agent', 'self-start');
             }
             bubble.innerHTML = message;
             chatArea.appendChild(bubble);
@@ -120,13 +120,13 @@
             if (!question) return;
 
             sendMessage(question);
-            userInput.value = \'\';
+            userInput.value = '';
 
             try {
-                const response = await fetch(\'/api/mdsap/ask\', {
-                    method: \'POST\',
+                const response = await fetch('/api/mdsap/ask', {
+                    method: 'POST',
                     headers: {
-                        \'Content-Type\': \'application/json\'
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ question: question })
                 });
@@ -138,91 +138,91 @@
                 }
             } catch (error) {
                 sendMessage(`Erro ao processar sua pergunta. Tente novamente.`, false);
-                console.error(\'Error asking question:\', error);
+                console.error('Error asking question:', error);
             }
         }
 
         async function fetchGlossary() {
-            sendMessage(\'Glossário MDSAP\');
+            sendMessage('Glossário MDSAP');
             try {
-                const response = await fetch(\'/api/mdsap/glossary\');
+                const response = await fetch('/api/mdsap/glossary');
                 const data = await response.json();
                 if (response.ok) {
-                    let glossaryHtml = \'<h3>Glossário MDSAP:</h3><ul>\';
+                    let glossaryHtml = '<h3>Glossário MDSAP:</h3><ul>';
                     data.forEach(item => {
                         glossaryHtml += `<li><strong>${item.term} (${item.acronym}):</strong> ${item.definition}</li>`;
                     });
-                    glossaryHtml += \'</ul>\';
+                    glossaryHtml += '</ul>';
                     sendMessage(glossaryHtml, false);
                 } else {
                     sendMessage(`Erro ao carregar glossário: ${data.error || response.statusText}.`, false);
                 }
             } catch (error) {
                 sendMessage(`Erro ao carregar glossário.`, false);
-                console.error(\'Error fetching glossary:\', error);
+                console.error('Error fetching glossary:', error);
             }
         }
 
         async function fetchCountries() {
-            sendMessage(\'Países Participantes\');
+            sendMessage('Países Participantes');
             try {
-                const response = await fetch(\'/api/mdsap/countries\');
+                const response = await fetch('/api/mdsap/countries');
                 const data = await response.json();
                 if (response.ok) {
-                    let countriesHtml = \'<h3>Países Participantes do MDSAP:</h3><ul>\';
+                    let countriesHtml = '<h3>Países Participantes do MDSAP:</h3><ul>';
                     data.forEach(country => {
                         countriesHtml += `<li><strong>${country.country_name}</strong> (${country.agency_acronym}): ${country.mdsap_usage}</li>`;
                     });
-                    countriesHtml += \'</ul>\';
+                    countriesHtml += '</ul>';
                     sendMessage(countriesHtml, false);
                 } else {
                     sendMessage(`Erro ao carregar países: ${data.error || response.statusText}.`, false);
                 }
             } catch (error) {
                 sendMessage(`Erro ao carregar países.`, false);
-                console.error(\'Error fetching countries:\', error);
+                console.error('Error fetching countries:', error);
             }
         }
 
         async function fetchAuditingOrganizations() {
-            sendMessage(\'Organizações de Auditoria\');
+            sendMessage('Organizações de Auditoria');
             try {
-                const response = await fetch(\'/api/mdsap/auditing-organizations\');
+                const response = await fetch('/api/mdsap/auditing-organizations');
                 const data = await response.json();
                 if (response.ok) {
-                    let orgsHtml = \'<h3>Organizações de Auditoria Reconhecidas:</h3><ul>\';
+                    let orgsHtml = '<h3>Organizações de Auditoria Reconhecidas:</h3><ul>';
                     data.forEach(org => {
                         orgsHtml += `<li><strong>${org.name}</strong> (${org.location}) - Contato: ${org.contact_person} (${org.contact_email})</li>`;
                     });
-                    orgsHtml += \'</ul>\';
+                    orgsHtml += '</ul>';
                     sendMessage(orgsHtml, false);
                 } else {
                     sendMessage(`Erro ao carregar organizações de auditoria: ${data.error || response.statusText}.`, false);
                 }
             } catch (error) {
                 sendMessage(`Erro ao carregar organizações de auditoria.`, false);
-                console.error(\'Error fetching auditing organizations:\', error);
+                console.error('Error fetching auditing organizations:', error);
             }
         }
 
         async function fetchCategories() {
-            sendMessage(\'Categorias de Conhecimento\');
+            sendMessage('Categorias de Conhecimento');
             try {
-                const response = await fetch(\'/api/mdsap/categories\');
+                const response = await fetch('/api/mdsap/categories');
                 const data = await response.json();
                 if (response.ok) {
-                    let categoriesHtml = \'<h3>Categorias de Conhecimento:</h3><ul>\';
+                    let categoriesHtml = '<h3>Categorias de Conhecimento:</h3><ul>';
                     data.forEach(category => {
                         categoriesHtml += `<li>${category}</li>`;
                     });
-                    categoriesHtml += \'</ul>\';
+                    categoriesHtml += '</ul>';
                     sendMessage(categoriesHtml, false);
                 } else {
                     sendMessage(`Erro ao carregar categorias: ${data.error || response.statusText}.`, false);
                 }
             } catch (error) {
                 sendMessage(`Erro ao carregar categorias.`, false);
-                console.error(\'Error fetching categories:\', error);
+                console.error('Error fetching categories:', error);
             }
         }
     </script>
