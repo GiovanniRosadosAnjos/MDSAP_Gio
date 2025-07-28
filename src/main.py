@@ -5,7 +5,7 @@ from flask import Flask, send_from_directory
 from flask_cors import CORS
 
 # Importar as rotas
-from routes.mdsap import mdsap_bp
+from src.routes.mdsap import mdsap_bp
 
 app = Flask(__name__, static_folder='static')
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -31,5 +31,4 @@ def serve_static(path):
 # A variável `app` é o WSGI callable que o Vercel espera.
 # Não é necessário um `if __name__ == '__main__'` para o deploy no Vercel.
 # O Vercel irá importar `app` diretamente.
-
 
