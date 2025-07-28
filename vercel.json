@@ -1,16 +1,17 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "src/main.py",
-      "use": "@vercel/python",
-      "config": { "maxLambdaSize": "15mb" }
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.9"
     }
-  ],
+  },
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
+    },
+    {
       "src": "/(.*)",
-      "dest": "src/main.py"
+      "dest": "/api/index.py"
     }
   ]
 }

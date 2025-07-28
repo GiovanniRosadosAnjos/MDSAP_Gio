@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente Especialista MDSAP</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #e0f2f7; /* Light blue background */
+        }
+        .chat-bubble-user {
+            background-color: #a7d9f7; /* Light blue for user */
+            border-radius: 15px 15px 0 15px;
+        }
+        .chat-bubble-agent {
+            background-color: #d4edda; /* Light green for agent */
+            border-radius: 15px 15px 15px 0;
+        }
+        .btn-quick-action {
+            background-color: #4a90e2; /* Blue for quick actions */
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .btn-quick-action:hover {
+            background-color: #357bd8;
+        }
+        .btn-suggested-question {
+            background-color: #6cb7e8; /* Lighter blue for suggested questions */
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .btn-suggested-question:hover {
+            background-color: #5a9cdb;
+        }
+        .header-bg {
+            background-color: #2c3e50; /* Dark blue-gray for header */
+        }
+        .sidebar-bg {
+            background-color: #34495e; /* Slightly lighter dark blue-gray for sidebar */
+        }
+    </style>
+</head>
+<body class="flex h-screen antialiased">
+    <div class="flex-1 flex flex-col">
+        <header class="header-bg text-white p-4 shadow-md">
+            <h1 class="text-2xl font-bold text-center">Agente Especialista MDSAP</h1>
+            <p class="text-center text-sm">Seu assistente inteligente para o Medical Device Single Audit Program</p>
+        </header>
+
+        <main class="flex flex-1 overflow-hidden">
+            <!-- Sidebar for Quick Actions and Suggested Questions -->
+            <aside class="sidebar-bg w-1/4 p-4 text-white overflow-y-auto shadow-lg">
+                <h2 class="text-lg font-semibold mb-4 flex items-center"><img src="https://api.iconify.design/mdi:lightbulb-on-outline.svg?color=%23ffffff" class="w-6 h-6 mr-2" alt="">Ações Rápidas</h2>
+                <div class="space-y-2 mb-6">
+                    <button class="btn-quick-action w-full py-2 px-4 rounded-lg flex items-center justify-center" onclick="fetchGlossary()">
+                        <img src="https://api.iconify.design/mdi:book-open-variant.svg?color=%23ffffff" class="w-5 h-5 mr-2" alt="">Glossário MDSAP
+                    </button>
+                    <button class="btn-quick-action w-full py-2 px-4 rounded-lg flex items-center justify-center" onclick="fetchCountries()">
+                        <img src="https://api.iconify.design/mdi:earth.svg?color=%23ffffff" class="w-5 h-5 mr-2" alt="">Países Participantes
+                    </button>
+                    <button class="btn-quick-action w-full py-2 px-4 rounded-lg flex items-center justify-center" onclick="fetchAuditingOrganizations()">
+                        <img src="https://api.iconify.design/mdi:factory.svg?color=%23ffffff" class="w-5 h-5 mr-2" alt="">Organizações de Auditoria
+                    </button>
+                    <button class="btn-quick-action w-full py-2 px-4 rounded-lg flex items-center justify-center" onclick="fetchCategories()">
+                        <img src="https://api.iconify.design/mdi:folder-multiple-outline.svg?color=%23ffffff" class="w-5 h-5 mr-2" alt="">Categorias de Conhecimento
+                    </button>
+                </div>
+
+                <h2 class="text-lg font-semibold mb-4 flex items-center"><img src="https://api.iconify.design/mdi:comment-question-outline.svg?color=%23ffffff" class="w-6 h-6 mr-2" alt="">Perguntas Sugeridas</h2>
+                <div class="space-y-2">
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'O que é o MDSAP?\')">O que é o MDSAP?</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'Quais são os benefícios do MDSAP?\')">Benefícios do MDSAP</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'Como funciona o processo de auditoria?\')">Processo de Auditoria</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'Qual a relação do MDSAP com a ISO 13485?\')">Relação com ISO 13485</button>
+                    <button class="btn-suggested-question w-full py-2 px-4 rounded-lg" onclick="askQuestion(\'O que é o documento (IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2))?\')">O que é o documento (IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2))?</button>
+                </div>
+            </aside>
+
+            <!-- Chat Area -->
+            <section class="flex-1 flex flex-col bg-gray-100 p-4 overflow-y-auto" id="chat-area">
+                <div class="chat-bubble-agent p-3 mb-4 max-w-3/4 self-start shadow-md">
+                    Olá! Sou seu agente especialista em MDSAP. Posso ajudá-lo com informações sobre o Medical Device Single Audit Program, países participantes, processos de auditoria e muito mais. Como posso ajudá-lo hoje?
+                </div>
+            </section>
+        </main>
+
+        <footer class="bg-white p-4 border-t border-gray-200 shadow-md">
+            <div class="flex space-x-4">
+                <input type="text" id="user-input" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Digite sua pergunta sobre MDSAP...">
+                <button class="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors" onclick="askQuestion()">Enviar</button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const chatArea = document.getElementById(\'chat-area\');
+        const userInput = document.getElementById(\'user-input\');
+
+        async function sendMessage(message, isUser = true) {
+            const bubble = document.createElement(\'div\');
+            bubble.classList.add(
+                \'p-3\',
+                \'mb-4\',
+                \'max-w-3/4\',
+                \'shadow-md\'
+            );
+            if (isUser) {
+                bubble.classList.add(\'chat-bubble-user\', \'self-end\');
+            } else {
+                bubble.classList.add(\'chat-bubble-agent\', \'self-start\');
+            }
+            bubble.innerHTML = message;
+            chatArea.appendChild(bubble);
+            chatArea.scrollTop = chatArea.scrollHeight; // Scroll to bottom
+        }
+
+        async function askQuestion(questionText = null) {
+            const question = questionText || userInput.value.trim();
+            if (!question) return;
+
+            sendMessage(question);
+            userInput.value = \'\';
+
+            try {
+                const response = await fetch(\'/api/mdsap/ask\', {
+                    method: \'POST\',
+                    headers: {
+                        \'Content-Type\': \'application/json\'
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    sendMessage(data.answer, false);
+                } else {
+                    sendMessage(`Erro ao processar sua pergunta: ${data.error || response.statusText}. Tente novamente.`, false);
+                }
+            } catch (error) {
+                sendMessage(`Erro ao processar sua pergunta. Tente novamente.`, false);
+                console.error(\'Error asking question:\', error);
+            }
+        }
+
+        async function fetchGlossary() {
+            sendMessage(\'Glossário MDSAP\');
+            try {
+                const response = await fetch(\'/api/mdsap/glossary\');
+                const data = await response.json();
+                if (response.ok) {
+                    let glossaryHtml = \'<h3>Glossário MDSAP:</h3><ul>\';
+                    data.forEach(item => {
+                        glossaryHtml += `<li><strong>${item.term} (${item.acronym}):</strong> ${item.definition}</li>`;
+                    });
+                    glossaryHtml += \'</ul>\';
+                    sendMessage(glossaryHtml, false);
+                } else {
+                    sendMessage(`Erro ao carregar glossário: ${data.error || response.statusText}.`, false);
+                }
+            } catch (error) {
+                sendMessage(`Erro ao carregar glossário.`, false);
+                console.error(\'Error fetching glossary:\', error);
+            }
+        }
+
+        async function fetchCountries() {
+            sendMessage(\'Países Participantes\');
+            try {
+                const response = await fetch(\'/api/mdsap/countries\');
+                const data = await response.json();
+                if (response.ok) {
+                    let countriesHtml = \'<h3>Países Participantes do MDSAP:</h3><ul>\';
+                    data.forEach(country => {
+                        countriesHtml += `<li><strong>${country.country_name}</strong> (${country.agency_acronym}): ${country.mdsap_usage}</li>`;
+                    });
+                    countriesHtml += \'</ul>\';
+                    sendMessage(countriesHtml, false);
+                } else {
+                    sendMessage(`Erro ao carregar países: ${data.error || response.statusText}.`, false);
+                }
+            } catch (error) {
+                sendMessage(`Erro ao carregar países.`, false);
+                console.error(\'Error fetching countries:\', error);
+            }
+        }
+
+        async function fetchAuditingOrganizations() {
+            sendMessage(\'Organizações de Auditoria\');
+            try {
+                const response = await fetch(\'/api/mdsap/auditing-organizations\');
+                const data = await response.json();
+                if (response.ok) {
+                    let orgsHtml = \'<h3>Organizações de Auditoria Reconhecidas:</h3><ul>\';
+                    data.forEach(org => {
+                        orgsHtml += `<li><strong>${org.name}</strong> (${org.location}) - Contato: ${org.contact_person} (${org.contact_email})</li>`;
+                    });
+                    orgsHtml += \'</ul>\';
+                    sendMessage(orgsHtml, false);
+                } else {
+                    sendMessage(`Erro ao carregar organizações de auditoria: ${data.error || response.statusText}.`, false);
+                }
+            } catch (error) {
+                sendMessage(`Erro ao carregar organizações de auditoria.`, false);
+                console.error(\'Error fetching auditing organizations:\', error);
+            }
+        }
+
+        async function fetchCategories() {
+            sendMessage(\'Categorias de Conhecimento\');
+            try {
+                const response = await fetch(\'/api/mdsap/categories\');
+                const data = await response.json();
+                if (response.ok) {
+                    let categoriesHtml = \'<h3>Categorias de Conhecimento:</h3><ul>\';
+                    data.forEach(category => {
+                        categoriesHtml += `<li>${category}</li>`;
+                    });
+                    categoriesHtml += \'</ul>\';
+                    sendMessage(categoriesHtml, false);
+                } else {
+                    sendMessage(`Erro ao carregar categorias: ${data.error || response.statusText}.`, false);
+                }
+            } catch (error) {
+                sendMessage(`Erro ao carregar categorias.`, false);
+                console.error(\'Error fetching categories:\', error);
+            }
+        }
+    </script>
+</body>
+</html>
+

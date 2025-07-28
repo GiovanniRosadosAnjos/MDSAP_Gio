@@ -1,6 +1,14 @@
-from flask import Blueprint, request, jsonify
+import os
+import sys
 
-mdsap_bp = Blueprint('mdsap', __name__)
+from flask import Flask, send_from_directory, request, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__, static_folder='../static')
+app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
+
+# Habilitar CORS para todas as rotas
+CORS(app)
 
 # Dados em memória - Base de conhecimento MDSAP
 KNOWLEDGE_DATA = [
@@ -45,6 +53,13 @@ KNOWLEDGE_DATA = [
         'topic': 'Benefícios do MDSAP',
         'content': 'Para os fabricantes de dispositivos médicos, o MDSAP oferece benefícios significativos: eficiência através da redução do número de auditorias; harmonização com conformidade a múltiplos requisitos regulatórios; facilitação do acesso a mercados internacionais; maior transparência e consistência na supervisão regulatória; e minimização das interrupções nas operações de fabricação.',
         'keywords': ['benefícios', 'eficiência', 'harmonização', 'acesso ao mercado', 'transparência', 'interrupções']
+    },
+    {
+        'id': 7,
+        'category': 'Documentos IMDRF',
+        'topic': 'IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2)',
+        'content': 'O documento IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2), intitulado "Competence and Training Requirements for Auditing Organizations", foi publicado em 16 de setembro de 2021 pelo IMDRF MDSAP Working Group. Ele estabelece os requisitos de competência e treinamento para Organizações de Auditoria reconhecidas que realizam auditorias em fabricantes de dispositivos médicos para fins regulatórios. O escopo abrange a garantia de que o pessoal da OA possua o compromisso, a competência, a experiência e o treinamento necessários para conduzir auditorias eficazes e consistentes. Detalha funções e papéis como Qualificador de Competência, Administrador de Programa, Auditor Líder/Auditor, Especialista Técnico e Revisor Final, com requisitos específicos para cada um.',
+        'keywords': ['IMDRF', 'MDSAP', 'N4FINAL:2021', 'Competence', 'Training', 'Auditing Organizations', 'documento', 'requisitos', 'auditoria']
     }
 ]
 
@@ -203,7 +218,7 @@ AUDITING_ORGS_DATA = [
     }
 ]
 
-@mdsap_bp.route('/search', methods=['GET'])
+@app.route('/api/mdsap/search', methods=['GET'])
 def search_knowledge():
     """Busca no conhecimento MDSAP por palavra-chave ou tópico"""
     query = request.args.get('q', '').strip().lower()
@@ -242,7 +257,7 @@ def search_knowledge():
         'total': len(results)
     })
 
-@mdsap_bp.route('/glossary', methods=['GET'])
+@app.route('/api/mdsap/glossary', methods=['GET'])
 def get_glossary():
     """Retorna todos os termos do glossário MDSAP"""
     return jsonify([{
@@ -252,7 +267,7 @@ def get_glossary():
         'acronym': term['acronym']
     } for term in GLOSSARY_DATA])
 
-@mdsap_bp.route('/glossary/<term>', methods=['GET'])
+@app.route('/api/mdsap/glossary/<term>', methods=['GET'])
 def get_glossary_term(term):
     """Busca um termo específico no glossário"""
     term_lower = term.lower()
@@ -269,7 +284,7 @@ def get_glossary_term(term):
     
     return jsonify({'error': 'Termo não encontrado'}), 404
 
-@mdsap_bp.route('/countries', methods=['GET'])
+@app.route('/api/mdsap/countries', methods=['GET'])
 def get_countries():
     """Retorna informações sobre países participantes do MDSAP"""
     return jsonify([{
@@ -282,7 +297,7 @@ def get_countries():
         'is_member': country['is_member']
     } for country in COUNTRIES_DATA])
 
-@mdsap_bp.route('/countries/<country_name>', methods=['GET'])
+@app.route('/api/mdsap/countries/<country_name>', methods=['GET'])
 def get_country_info(country_name):
     """Retorna informações específicas de um país"""
     country_name_lower = country_name.lower()
@@ -301,7 +316,7 @@ def get_country_info(country_name):
     
     return jsonify({'error': 'País não encontrado'}), 404
 
-@mdsap_bp.route('/auditing-organizations', methods=['GET'])
+@app.route('/api/mdsap/auditing-organizations', methods=['GET'])
 def get_auditing_organizations():
     """Retorna lista de Organizações de Auditoria reconhecidas"""
     return jsonify([{
@@ -315,13 +330,13 @@ def get_auditing_organizations():
         'website': org['website']
     } for org in AUDITING_ORGS_DATA if org['is_recognized']])
 
-@mdsap_bp.route('/categories', methods=['GET'])
+@app.route('/api/mdsap/categories', methods=['GET'])
 def get_categories():
     """Retorna todas as categorias de conhecimento disponíveis"""
     categories = list(set(knowledge['category'] for knowledge in KNOWLEDGE_DATA))
     return jsonify(categories)
 
-@mdsap_bp.route('/ask', methods=['POST'])
+@app.route('/api/mdsap/ask', methods=['POST'])
 def ask_question():
     """Endpoint principal para fazer perguntas ao agente MDSAP"""
     data = request.get_json()
@@ -370,33 +385,35 @@ def process_question(question):
         related_topics = []
         
         for knowledge in relevant_knowledge[:3]:  # Limitar a 3 resultados mais relevantes
-            content_parts.append(knowledge['content'])
-            sources.append({
-                'topic': knowledge['topic'],
-                'category': knowledge['category']
-            })
-            if knowledge['topic'] not in related_topics:
-                related_topics.append(knowledge['topic'])
+            content_parts.append(f"**{knowledge['topic']}**: {knowledge['content']}")
+            sources.append(knowledge['category'])
+            related_topics.append(knowledge['topic'])
         
-        answer = " ".join(content_parts)
+        answer = "\n".join(content_parts)
         
-        # Limitar o tamanho da resposta
-        if len(answer) > 1000:
-            answer = answer[:1000] + "..."
-    
+        # Adicionar uma resposta padrão se a busca for muito ampla
+        if len(relevant_knowledge) > 3:
+            answer += "\n\nEncontrei mais informações relevantes. Por favor, seja mais específico em sua pergunta para obter uma resposta mais detalhada."
+
     return {
         'answer': answer,
-        'sources': sources,
-        'related_topics': related_topics[:5]  # Limitar a 5 tópicos relacionados
+        'sources': list(set(sources)),  # Remover duplicatas
+        'related_topics': list(set(related_topics)) # Remover duplicatas
     }
 
+@app.route('/')
+def index():
+    return send_from_directory(app.static_folder, 'index.html')
 
-,
-    {
-        'id': 7,
-        'category': 'Documentos IMDRF',
-        'topic': 'IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2)',
-        'content': 'O documento IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2), intitulado "Competence and Training Requirements for Auditing Organizations", foi publicado em 16 de setembro de 2021 pelo IMDRF MDSAP Working Group. Ele estabelece os requisitos de competência e treinamento para Organizações de Auditoria reconhecidas que realizam auditorias em fabricantes de dispositivos médicos para fins regulatórios. O escopo abrange a garantia de que o pessoal da OA possua o compromisso, a competência, a experiência e o treinamento necessários para conduzir auditorias eficazes e consistentes. Detalha funções e papéis como Qualificador de Competência, Administrador de Programa, Auditor Líder/Auditor, Especialista Técnico e Revisor Final, com requisitos específicos para cada um.',
-        'keywords': ['IMDRF', 'MDSAP', 'N4FINAL:2021', 'Competence', 'Training', 'Auditing Organizations', 'documento', 'requisitos', 'auditoria']
-    }
+@app.route('/<path:path>')
+def serve_static(path):
+    try:
+        return send_from_directory(app.static_folder, path)
+    except:
+        return send_from_directory(app.static_folder, 'index.html')
+
+# Para Vercel
+# A variável `app` é o WSGI callable que o Vercel espera.
+# Não é necessário um `if __name__ == '__main__'` para o deploy no Vercel.
+# O Vercel irá importar `app` diretamente.
 
