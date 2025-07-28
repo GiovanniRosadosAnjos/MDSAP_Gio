@@ -60,6 +60,20 @@ KNOWLEDGE_DATA = [
         'topic': 'IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2)',
         'content': 'O documento IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2), intitulado "Competence and Training Requirements for Auditing Organizations", foi publicado em 16 de setembro de 2021 pelo IMDRF MDSAP Working Group. Ele estabelece os requisitos de competência e treinamento para Organizações de Auditoria reconhecidas que realizam auditorias em fabricantes de dispositivos médicos para fins regulatórios. O escopo abrange a garantia de que o pessoal da OA possua o compromisso, a competência, a experiência e o treinamento necessários para conduzir auditorias eficazes e consistentes. Detalha funções e papéis como Qualificador de Competência, Administrador de Programa, Auditor Líder/Auditor, Especialista Técnico e Revisor Final, com requisitos específicos para cada um.',
         'keywords': ['IMDRF', 'MDSAP', 'N4FINAL:2021', 'Competence', 'Training', 'Auditing Organizations', 'documento', 'requisitos', 'auditoria']
+    },
+    {
+        'id': 8,
+        'category': 'Requisitos de Auditores',
+        'topic': 'Formação Mínima para Auditores MDSAP',
+        'content': 'Baseado no documento N4 (IMDRF/MDSAP WG/N4FINAL:2021), os auditores MDSAP devem possuir diploma ou grau universitário em áreas como: Biologia, Microbiologia, Química, Bioquímica, Tecnologia de hardware/software, Ciências dos materiais, Engenharia (elétrica, mecânica, biomédica, clínica, bioengenharia), Fisiologia humana, Medicina, Farmácia, ou Física e biofísica. Além disso, é exigido mínimo de 4 anos de experiência relevante em tempo integral. Program Administrators precisam apenas de certificados de educação secundária.',
+        'keywords': ['N4', 'formação', 'educação', 'diploma', 'grau universitário', 'auditores', 'requisitos', 'experiência', 'qualificação']
+    },
+    {
+        'id': 9,
+        'category': 'Requisitos de Auditores',
+        'topic': 'Competências Exigidas para Auditores MDSAP',
+        'content': 'O documento N4 estabelece três categorias de competências para auditores MDSAP: 1) Competências Fundamentais - habilidades genéricas como adaptabilidade, pensamento crítico, comunicação; 2) Competências Funcionais - gestão de projetos, trabalho em equipe, uso de tecnologia; 3) Competências Técnicas - conhecimento específico em requisitos regulamentares, avaliação de risco, impactos na saúde e segurança. Technical Experts devem demonstrar expertise avançada em processos ou tecnologias específicas.',
+        'keywords': ['N4', 'competências', 'habilidades', 'technical expert', 'lead auditor', 'qualificação', 'avaliação']
     }
 ]
 
