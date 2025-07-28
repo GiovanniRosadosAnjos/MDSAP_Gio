@@ -390,3 +390,13 @@ def process_question(question):
         'related_topics': related_topics[:5]  # Limitar a 5 tópicos relacionados
     }
 
+
+,
+    {
+        'id': 7,
+        'category': 'Documentos IMDRF',
+        'topic': 'IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2)',
+        'content': 'O documento IMDRF/MDSAP WG/N4FINAL:2021 (Edition 2), intitulado "Competence and Training Requirements for Auditing Organizations", foi publicado em 16 de setembro de 2021 pelo IMDRF MDSAP Working Group. Ele estabelece os requisitos de competência e treinamento para Organizações de Auditoria reconhecidas que realizam auditorias em fabricantes de dispositivos médicos para fins regulatórios. O escopo abrange a garantia de que o pessoal da OA possua o compromisso, a competência, a experiência e o treinamento necessários para conduzir auditorias eficazes e consistentes. Detalha funções e papéis como Qualificador de Competência, Administrador de Programa, Auditor Líder/Auditor, Especialista Técnico e Revisor Final, com requisitos específicos para cada um.',
+        'keywords': ['IMDRF', 'MDSAP', 'N4FINAL:2021', 'Competence', 'Training', 'Auditing Organizations', 'documento', 'requisitos', 'auditoria']
+    }
+
