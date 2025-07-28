@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agente Especialista MDSAP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .sidebar h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .sidebar button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .sidebar button:hover {
+            background: #2980b9;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background: #e3f2fd;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.agent {
+            background: #f1f8e9;
+            margin-right: auto;
+        }
+
+        .message.system {
+            background: #fff3e0;
+            text-align: center;
+            max-width: 100%;
+            font-style: italic;
+        }
+
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .input-group button {
+            padding: 12px 24px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .input-group button:hover {
+            background: #229954;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .sources {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .related-topics {
+            margin-top: 10px;
+        }
+
+        .topic-tag {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+
+        .topic-tag:hover {
+            background: #2980b9;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Agente Especialista MDSAP</h1>
+            <p>Seu assistente inteligente para o Medical Device Single Audit Program</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>🔍 Ações Rápidas</h3>
+                <button onclick="showGlossary()">📚 Glossário MDSAP</button>
+                <button onclick="showCountries()">🌍 Países Participantes</button>
+                <button onclick="showAuditingOrgs()">🏢 Organizações de Auditoria</button>
+                <button onclick="showCategories()">📂 Categorias de Conhecimento</button>
+                
+                <h3>❓ Perguntas Sugeridas</h3>
+                <button onclick="askQuestion('O que é o MDSAP?')">O que é o MDSAP?</button>
+                <button onclick="askQuestion('Quais são os benefícios do MDSAP?')">Benefícios do MDSAP</button>
+                <button onclick="askQuestion('Como funciona o processo de auditoria?')">Processo de Auditoria</button>
+                <button onclick="askQuestion('Qual a relação com a ISO 13485?')">Relação com ISO 13485</button>
+            </div>
+            
+            <div class="chat-area">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system">
+                        Olá! Sou seu agente especialista em MDSAP. Posso ajudá-lo com informações sobre o Medical Device Single Audit Program, países participantes, processos de auditoria e muito mais. Como posso ajudá-lo hoje?
+                    </div>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <p>🤔 Processando sua pergunta...</p>
+                </div>
+                
+                <div class="chat-input">
+                    <div class="input-group">
+                        <input type="text" id="questionInput" placeholder="Digite sua pergunta sobre MDSAP..." onkeypress="handleKeyPress(event)">
+                        <button onclick="sendQuestion()">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/mdsap';
+        
+        function addMessage(content, type = 'agent', sources = null, relatedTopics = null) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            let messageContent = `<p>${content}</p>`;
+            
+            if (sources && sources.length > 0) {
+                messageContent += '<div class="sources"><strong>Fontes:</strong><br>';
+                sources.forEach(source => {
+                    messageContent += `• ${source.topic} (${source.category})<br>`;
+                });
+                messageContent += '</div>';
+            }
+            
+            if (relatedTopics && relatedTopics.length > 0) {
+                messageContent += '<div class="related-topics"><strong>Tópicos relacionados:</strong><br>';
+                relatedTopics.forEach(topic => {
+                    messageContent += `<span class="topic-tag" onclick="askQuestion('${topic}')">${topic}</span>`;
+                });
+                messageContent += '</div>';
+            }
+            
+            messageDiv.innerHTML = messageContent;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+        
+        async function sendQuestion() {
+            const input = document.getElementById('questionInput');
+            const question = input.value.trim();
+            
+            if (!question) return;
+            
+            // Adicionar pergunta do usuário
+            addMessage(question, 'user');
+            input.value = '';
+            
+            showLoading(true);
+            
+            try {
+                const response = await fetch(`${API_BASE}/ask`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: question })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addMessage(data.answer, 'agent', data.sources, data.related_topics);
+                } else {
+                    addMessage(`Erro: ${data.error}`, 'system');
+                }
+            } catch (error) {
+                addMessage('Erro ao processar sua pergunta. Tente novamente.', 'system');
+            }
+            
+            showLoading(false);
+        }
+        
+        function askQuestion(question) {
+            document.getElementById('questionInput').value = question;
+            sendQuestion();
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendQuestion();
+            }
+        }
+        
+        async function showGlossary() {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE}/glossary`);
+                const data = await response.json();
+                
+                let content = '<strong>📚 Glossário MDSAP:</strong><br><br>';
+                data.forEach(term => {
+                    content += `<strong>${term.term}</strong>`;
+                    if (term.acronym) content += ` (${term.acronym})`;
+                    content += `<br>${term.definition}<br><br>`;
+                });
+                
+                addMessage(content, 'agent');
+            } catch (error) {
+                addMessage('Erro ao carregar glossário.', 'system');
+            }
+            showLoading(false);
+        }
+        
+        async function showCountries() {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE}/countries`);
+                const data = await response.json();
+                
+                let content = '<strong>🌍 Países Participantes do MDSAP:</strong><br><br>';
+                data.forEach(country => {
+                    content += `<strong>${country.country_name}</strong><br>`;
+                    content += `Agência: ${country.regulatory_agency} (${country.agency_acronym})<br>`;
+                    content += `Uso do MDSAP: ${country.mdsap_usage}<br><br>`;
+                });
+                
+                addMessage(content, 'agent');
+            } catch (error) {
+                addMessage('Erro ao carregar países.', 'system');
+            }
+            showLoading(false);
+        }
+        
+        async function showAuditingOrgs() {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE}/auditing-organizations`);
+                const data = await response.json();
+                
+                let content = '<strong>🏢 Organizações de Auditoria Reconhecidas:</strong><br><br>';
+                data.forEach(org => {
+                    content += `<strong>${org.name}</strong><br>`;
+                    content += `Localização: ${org.location}<br>`;
+                    if (org.contact_person) content += `Contato: ${org.contact_person}<br>`;
+                    if (org.contact_email) content += `Email: ${org.contact_email}<br>`;
+                    content += '<br>';
+                });
+                
+                addMessage(content, 'agent');
+            } catch (error) {
+                addMessage('Erro ao carregar organizações de auditoria.', 'system');
+            }
+            showLoading(false);
+        }
+        
+        async function showCategories() {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                const data = await response.json();
+                
+                let content = '<strong>📂 Categorias de Conhecimento Disponíveis:</strong><br><br>';
+                data.forEach(category => {
+                    content += `• ${category}<br>`;
+                });
+                
+                addMessage(content, 'agent');
+            } catch (error) {
+                addMessage('Erro ao carregar categorias.', 'system');
+            }
+            showLoading(false);
+        }
+    </script>
+</body>
+</html>
+
