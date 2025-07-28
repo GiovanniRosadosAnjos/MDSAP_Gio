@@ -1,90 +1,325 @@
 from flask import Blueprint, request, jsonify
-from src.models.mdsap_knowledge import db, MDSAPKnowledge, MDSAPGlossary, MDSAPCountry, AuditingOrganization
-from sqlalchemy import or_
 
 mdsap_bp = Blueprint('mdsap', __name__)
+
+# Dados em memória - Base de conhecimento MDSAP
+KNOWLEDGE_DATA = [
+    {
+        'id': 1,
+        'category': 'Introdução',
+        'topic': 'O que é o MDSAP',
+        'content': 'O Medical Device Single Audit Program (MDSAP) é uma iniciativa global que visa harmonizar os requisitos regulatórios para dispositivos médicos em diversos países. Reconhecido pelo Fórum Internacional de Reguladores de Produtos para Saúde (IMDRF), o MDSAP busca otimizar o processo de auditoria de fabricantes de dispositivos médicos, garantindo a segurança e a qualidade dos produtos em nível internacional.',
+        'keywords': ['MDSAP', 'Medical Device Single Audit Program', 'IMDRF', 'auditoria', 'dispositivos médicos', 'harmonização']
+    },
+    {
+        'id': 2,
+        'category': 'Objetivos',
+        'topic': 'Objetivos do MDSAP',
+        'content': 'O principal objetivo do MDSAP é permitir que fabricantes de dispositivos médicos passem por uma única auditoria realizada por um Organismo Auditor (OA) reconhecido. Essa auditoria abrange os requisitos regulatórios de múltiplas jurisdições participantes, eliminando a necessidade de auditorias separadas por cada autoridade reguladora. Isso resulta em maior eficiência, redução de custos e minimização de interrupções nas operações de fabricação.',
+        'keywords': ['objetivos', 'auditoria única', 'eficiência', 'redução de custos', 'Organismo Auditor', 'OA']
+    },
+    {
+        'id': 3,
+        'category': 'Países Participantes',
+        'topic': 'Membros do MDSAP',
+        'content': 'O MDSAP conta com a participação de cinco países membros principais: Austrália (TGA), Brasil (ANVISA), Canadá (Health Canada), Japão (MHLW e PMDA) e Estados Unidos (FDA). Além desses membros, o MDSAP possui países afiliados que utilizam os relatórios de auditoria para fins regulatórios, como Argentina, Indonésia, Israel, República da Coreia e Singapura.',
+        'keywords': ['países membros', 'TGA', 'ANVISA', 'Health Canada', 'MHLW', 'PMDA', 'FDA', 'países afiliados']
+    },
+    {
+        'id': 4,
+        'category': 'Processo de Auditoria',
+        'topic': 'Ciclo de Auditoria MDSAP',
+        'content': 'O processo de auditoria MDSAP segue um ciclo de três anos, alinhado com os requisitos da ISO/IEC 17021. O ciclo compreende: Auditoria de Certificação Inicial (Estágio 1) - revisão da documentação; Auditoria de Certificação Inicial (Estágio 2) - avaliação aprofundada da conformidade; Auditorias de Vigilância - realizadas anualmente; e Auditoria de Recertificação - conduzida no terceiro ano.',
+        'keywords': ['ciclo de auditoria', 'três anos', 'ISO/IEC 17021', 'estágio 1', 'estágio 2', 'vigilância', 'recertificação']
+    },
+    {
+        'id': 5,
+        'category': 'ISO 13485',
+        'topic': 'Relação com ISO 13485',
+        'content': 'A ISO 13485:2016 é a base fundamental do MDSAP. O certificado MDSAP não substitui a certificação ISO 13485, mas a complementa, incorporando os requisitos regulatórios dos países membros. No Canadá, a certificação MDSAP tornou-se obrigatória para a obtenção de licenças de dispositivos médicos de certas classes.',
+        'keywords': ['ISO 13485', 'certificação', 'complementa', 'requisitos regulatórios', 'Canadá', 'obrigatória']
+    },
+    {
+        'id': 6,
+        'category': 'Benefícios',
+        'topic': 'Benefícios do MDSAP',
+        'content': 'Para os fabricantes de dispositivos médicos, o MDSAP oferece benefícios significativos: eficiência através da redução do número de auditorias; harmonização com conformidade a múltiplos requisitos regulatórios; facilitação do acesso a mercados internacionais; maior transparência e consistência na supervisão regulatória; e minimização das interrupções nas operações de fabricação.',
+        'keywords': ['benefícios', 'eficiência', 'harmonização', 'acesso ao mercado', 'transparência', 'interrupções']
+    }
+]
+
+# Glossário MDSAP
+GLOSSARY_DATA = [
+    {
+        'id': 1,
+        'term': 'Medical Device Single Audit Program',
+        'acronym': 'MDSAP',
+        'definition': 'Programa de Auditoria Única em Produtos para a Saúde, que permite uma única auditoria regulatória para múltiplos países.'
+    },
+    {
+        'id': 2,
+        'term': 'International Medical Device Regulators Forum',
+        'acronym': 'IMDRF',
+        'definition': 'Fórum Internacional de Reguladores de Produtos para Saúde, responsável pelo reconhecimento do MDSAP.'
+    },
+    {
+        'id': 3,
+        'term': 'Agência Nacional de Vigilância Sanitária',
+        'acronym': 'ANVISA',
+        'definition': 'Agência reguladora do Brasil, participante do MDSAP.'
+    },
+    {
+        'id': 4,
+        'term': 'Therapeutic Goods Administration',
+        'acronym': 'TGA',
+        'definition': 'Agência reguladora da Austrália, participante do MDSAP.'
+    },
+    {
+        'id': 5,
+        'term': 'U.S. Food and Drug Administration',
+        'acronym': 'FDA',
+        'definition': 'Agência reguladora dos Estados Unidos, participante do MDSAP.'
+    },
+    {
+        'id': 6,
+        'term': 'Organismo Auditor',
+        'acronym': 'OA',
+        'definition': 'Entidade autorizada pelo MDSAP para realizar auditorias em fabricantes de dispositivos médicos.'
+    },
+    {
+        'id': 7,
+        'term': 'Sistema de Gestão da Qualidade',
+        'acronym': 'SGQ',
+        'definition': 'Conjunto de processos e procedimentos que uma organização utiliza para garantir que seus produtos e serviços atendam aos requisitos do cliente e regulatórios.'
+    },
+    {
+        'id': 8,
+        'term': 'Electronic Product Radiation Control',
+        'acronym': 'EPRC',
+        'definition': 'Disposições de Controle de Radiação de Produtos Eletrônicos, para as quais a FDA ainda realiza inspeções separadas.'
+    }
+]
+
+# Países participantes
+COUNTRIES_DATA = [
+    {
+        'id': 1,
+        'country_name': 'Austrália',
+        'regulatory_agency': 'Therapeutic Goods Administration',
+        'agency_acronym': 'TGA',
+        'mdsap_usage': 'A TGA utiliza relatórios e certificados de auditoria MDSAP como parte da evidência avaliada para conformidade com os procedimentos de avaliação de conformidade de dispositivos médicos e requisitos de autorização de mercado.',
+        'requirements': 'Conformidade com procedimentos de avaliação de conformidade e requisitos de autorização de mercado.',
+        'is_member': True
+    },
+    {
+        'id': 2,
+        'country_name': 'Brasil',
+        'regulatory_agency': 'Agência Nacional de Vigilância Sanitária',
+        'agency_acronym': 'ANVISA',
+        'mdsap_usage': 'A ANVISA utiliza relatórios de auditoria MDSAP em sua decisão de certificação para certificados GMP ANVISA brasileiros (a inspeção da ANVISA não é necessária).',
+        'requirements': 'Certificados GMP ANVISA brasileiros.',
+        'is_member': True
+    },
+    {
+        'id': 3,
+        'country_name': 'Canadá',
+        'regulatory_agency': 'Health Canada',
+        'agency_acronym': 'HC',
+        'mdsap_usage': 'A certificação MDSAP é obrigatória para obter uma nova (ou manter ou alterar uma existente) licença de dispositivo médico Classe II, III ou IV.',
+        'requirements': 'Certificação MDSAP obrigatória para dispositivos Classe II, III e IV.',
+        'is_member': True
+    },
+    {
+        'id': 4,
+        'country_name': 'Japão',
+        'regulatory_agency': 'Ministry of Health, Labour and Welfare / Pharmaceuticals and Medical Devices Agency',
+        'agency_acronym': 'MHLW/PMDA',
+        'mdsap_usage': 'Utilizam os relatórios MDSAP para isentar locais de fabricação de inspeções no local e/ou permitir que um detentor de autorização de comercialização substitua uma parte considerável dos documentos exigidos para a inspeção pelo relatório.',
+        'requirements': 'Inspeções QMS pré-mercado ou pós-mercado periódicas.',
+        'is_member': True
+    },
+    {
+        'id': 5,
+        'country_name': 'Estados Unidos',
+        'regulatory_agency': 'U.S. Food and Drug Administration',
+        'agency_acronym': 'FDA',
+        'mdsap_usage': 'O Centro de Dispositivos e Saúde Radiológica (CDRH) da FDA aceita os relatórios de auditoria MDSAP como um substituto para as inspeções de rotina da FDA.',
+        'requirements': 'Empresas com atividades EPRC continuam sujeitas a inspeções da FDA.',
+        'is_member': True
+    }
+]
+
+# Organizações de Auditoria
+AUDITING_ORGS_DATA = [
+    {
+        'id': 1,
+        'name': 'BSI Group America Inc.',
+        'location': 'Herndon, VA, USA',
+        'contact_person': 'Morgan Quandt',
+        'contact_email': 'Morgan.quandt@bsigroup.com',
+        'contact_phone': '+1 571 443 1708',
+        'is_recognized': True,
+        'website': 'https://www.bsigroup.com'
+    },
+    {
+        'id': 2,
+        'name': 'DEKRA Certification B.V.',
+        'location': 'Arnhem, Netherlands',
+        'contact_person': 'Adriano Mulloni',
+        'contact_email': 'mdsap.nl@dekra.com',
+        'contact_phone': '+31 88 96 83000',
+        'is_recognized': True,
+        'website': 'https://www.dekra.com'
+    },
+    {
+        'id': 3,
+        'name': 'DNV Product Assurance AS',
+        'location': 'Hovik, Norway',
+        'contact_person': 'Zaher Kharboutly',
+        'contact_email': 'zaher.kharboutly@dnv.com',
+        'contact_phone': '+1 416 276 9525',
+        'is_recognized': True,
+        'website': 'https://www.dnv.com'
+    },
+    {
+        'id': 4,
+        'name': 'UL LLC, UL Solutions medical regulatory services',
+        'location': 'Northbrook, IL, USA',
+        'contact_person': 'Chiranjit Deka',
+        'contact_email': 'chiranjit.deka@ul.com',
+        'contact_phone': '+1 919-208-4704',
+        'is_recognized': True,
+        'website': 'https://www.ul.com'
+    },
+    {
+        'id': 5,
+        'name': 'TÜV SÜD America Inc.',
+        'location': 'Wakefield, MA, USA',
+        'contact_person': 'Dawn Tibodeau',
+        'contact_email': 'Dawn.Tibodeau@tuvsud.com',
+        'contact_phone': '+1 651 638 0288',
+        'is_recognized': True,
+        'website': 'https://www.tuvsud.com'
+    }
+]
 
 @mdsap_bp.route('/search', methods=['GET'])
 def search_knowledge():
     """Busca no conhecimento MDSAP por palavra-chave ou tópico"""
-    query = request.args.get('q', '').strip()
-    category = request.args.get('category', '').strip()
+    query = request.args.get('q', '').strip().lower()
+    category = request.args.get('category', '').strip().lower()
     
     if not query and not category:
         return jsonify({'error': 'Parâmetro de busca (q) ou categoria é obrigatório'}), 400
     
-    # Construir a consulta
-    search_query = MDSAPKnowledge.query
+    results = []
     
-    if query:
-        search_query = search_query.filter(
-            or_(
-                MDSAPKnowledge.topic.contains(query),
-                MDSAPKnowledge.content.contains(query),
-                MDSAPKnowledge.keywords.contains(query)
-            )
-        )
-    
-    if category:
-        search_query = search_query.filter(MDSAPKnowledge.category.ilike(f'%{category}%'))
-    
-    results = search_query.all()
+    for knowledge in KNOWLEDGE_DATA:
+        match = False
+        
+        if query:
+            # Buscar na topic, content e keywords
+            if (query in knowledge['topic'].lower() or 
+                query in knowledge['content'].lower() or 
+                any(query in keyword.lower() for keyword in knowledge['keywords'])):
+                match = True
+        
+        if category:
+            if category in knowledge['category'].lower():
+                match = True
+        
+        if match:
+            results.append({
+                'id': knowledge['id'],
+                'category': knowledge['category'],
+                'topic': knowledge['topic'],
+                'content': knowledge['content'],
+                'keywords': knowledge['keywords']
+            })
     
     return jsonify({
-        'results': [result.to_dict() for result in results],
+        'results': results,
         'total': len(results)
     })
 
 @mdsap_bp.route('/glossary', methods=['GET'])
 def get_glossary():
     """Retorna todos os termos do glossário MDSAP"""
-    terms = MDSAPGlossary.query.order_by(MDSAPGlossary.term).all()
-    return jsonify([term.to_dict() for term in terms])
+    return jsonify([{
+        'id': term['id'],
+        'term': term['term'],
+        'definition': term['definition'],
+        'acronym': term['acronym']
+    } for term in GLOSSARY_DATA])
 
 @mdsap_bp.route('/glossary/<term>', methods=['GET'])
 def get_glossary_term(term):
     """Busca um termo específico no glossário"""
-    glossary_term = MDSAPGlossary.query.filter(
-        or_(
-            MDSAPGlossary.term.ilike(f'%{term}%'),
-            MDSAPGlossary.acronym.ilike(f'%{term}%')
-        )
-    ).first()
+    term_lower = term.lower()
     
-    if not glossary_term:
-        return jsonify({'error': 'Termo não encontrado'}), 404
+    for glossary_term in GLOSSARY_DATA:
+        if (term_lower in glossary_term['term'].lower() or 
+            (glossary_term['acronym'] and term_lower in glossary_term['acronym'].lower())):
+            return jsonify({
+                'id': glossary_term['id'],
+                'term': glossary_term['term'],
+                'definition': glossary_term['definition'],
+                'acronym': glossary_term['acronym']
+            })
     
-    return jsonify(glossary_term.to_dict())
+    return jsonify({'error': 'Termo não encontrado'}), 404
 
 @mdsap_bp.route('/countries', methods=['GET'])
 def get_countries():
     """Retorna informações sobre países participantes do MDSAP"""
-    countries = MDSAPCountry.query.order_by(MDSAPCountry.country_name).all()
-    return jsonify([country.to_dict() for country in countries])
+    return jsonify([{
+        'id': country['id'],
+        'country_name': country['country_name'],
+        'regulatory_agency': country['regulatory_agency'],
+        'agency_acronym': country['agency_acronym'],
+        'mdsap_usage': country['mdsap_usage'],
+        'requirements': country['requirements'],
+        'is_member': country['is_member']
+    } for country in COUNTRIES_DATA])
 
 @mdsap_bp.route('/countries/<country_name>', methods=['GET'])
 def get_country_info(country_name):
     """Retorna informações específicas de um país"""
-    country = MDSAPCountry.query.filter(
-        MDSAPCountry.country_name.ilike(f'%{country_name}%')
-    ).first()
+    country_name_lower = country_name.lower()
     
-    if not country:
-        return jsonify({'error': 'País não encontrado'}), 404
+    for country in COUNTRIES_DATA:
+        if country_name_lower in country['country_name'].lower():
+            return jsonify({
+                'id': country['id'],
+                'country_name': country['country_name'],
+                'regulatory_agency': country['regulatory_agency'],
+                'agency_acronym': country['agency_acronym'],
+                'mdsap_usage': country['mdsap_usage'],
+                'requirements': country['requirements'],
+                'is_member': country['is_member']
+            })
     
-    return jsonify(country.to_dict())
+    return jsonify({'error': 'País não encontrado'}), 404
 
 @mdsap_bp.route('/auditing-organizations', methods=['GET'])
 def get_auditing_organizations():
     """Retorna lista de Organizações de Auditoria reconhecidas"""
-    organizations = AuditingOrganization.query.filter_by(is_recognized=True).all()
-    return jsonify([org.to_dict() for org in organizations])
+    return jsonify([{
+        'id': org['id'],
+        'name': org['name'],
+        'location': org['location'],
+        'contact_person': org['contact_person'],
+        'contact_email': org['contact_email'],
+        'contact_phone': org['contact_phone'],
+        'is_recognized': org['is_recognized'],
+        'website': org['website']
+    } for org in AUDITING_ORGS_DATA if org['is_recognized']])
 
 @mdsap_bp.route('/categories', methods=['GET'])
 def get_categories():
     """Retorna todas as categorias de conhecimento disponíveis"""
-    categories = db.session.query(MDSAPKnowledge.category).distinct().all()
-    return jsonify([category[0] for category in categories])
+    categories = list(set(knowledge['category'] for knowledge in KNOWLEDGE_DATA))
+    return jsonify(categories)
 
 @mdsap_bp.route('/ask', methods=['POST'])
 def ask_question():
@@ -109,23 +344,6 @@ def ask_question():
 def process_question(question):
     """Processa a pergunta e retorna uma resposta baseada no conhecimento"""
     
-    # Palavras-chave para diferentes tipos de perguntas
-    keywords_mapping = {
-        'o que é': ['definição', 'conceito', 'introdução'],
-        'como': ['processo', 'procedimento', 'etapas'],
-        'quais': ['lista', 'tipos', 'categorias'],
-        'onde': ['localização', 'países', 'jurisdições'],
-        'quando': ['cronograma', 'prazo', 'tempo'],
-        'por que': ['benefícios', 'objetivos', 'razões']
-    }
-    
-    # Identificar o tipo de pergunta
-    question_type = None
-    for key in keywords_mapping:
-        if key in question:
-            question_type = key
-            break
-    
     # Buscar conhecimento relevante
     relevant_knowledge = []
     
@@ -133,20 +351,15 @@ def process_question(question):
     words = question.split()
     for word in words:
         if len(word) > 3:  # Ignorar palavras muito curtas
-            results = MDSAPKnowledge.query.filter(
-                or_(
-                    MDSAPKnowledge.topic.contains(word),
-                    MDSAPKnowledge.content.contains(word),
-                    MDSAPKnowledge.keywords.contains(word)
-                )
-            ).limit(5).all()
-            relevant_knowledge.extend(results)
-    
-    # Remover duplicatas
-    unique_knowledge = list({k.id: k for k in relevant_knowledge}.values())
+            for knowledge in KNOWLEDGE_DATA:
+                if (word in knowledge['topic'].lower() or 
+                    word in knowledge['content'].lower() or 
+                    any(word in keyword.lower() for keyword in knowledge['keywords'])):
+                    if knowledge not in relevant_knowledge:
+                        relevant_knowledge.append(knowledge)
     
     # Gerar resposta
-    if not unique_knowledge:
+    if not relevant_knowledge:
         answer = "Desculpe, não encontrei informações específicas sobre sua pergunta. Você pode tentar reformular a pergunta ou buscar por termos mais específicos relacionados ao MDSAP."
         sources = []
         related_topics = []
@@ -156,14 +369,14 @@ def process_question(question):
         sources = []
         related_topics = []
         
-        for knowledge in unique_knowledge[:3]:  # Limitar a 3 resultados mais relevantes
-            content_parts.append(knowledge.content)
+        for knowledge in relevant_knowledge[:3]:  # Limitar a 3 resultados mais relevantes
+            content_parts.append(knowledge['content'])
             sources.append({
-                'topic': knowledge.topic,
-                'category': knowledge.category
+                'topic': knowledge['topic'],
+                'category': knowledge['category']
             })
-            if knowledge.topic not in related_topics:
-                related_topics.append(knowledge.topic)
+            if knowledge['topic'] not in related_topics:
+                related_topics.append(knowledge['topic'])
         
         answer = " ".join(content_parts)
         
